@@ -71,6 +71,79 @@ canvas {
     margin-top: 10px;
 }
 
+:root {
+    --bg-color: #1a1a2e;
+    --game-bg: #0f3460;
+    --accent-color: #e94560;
+    --text-color: #ffffff;
+    --snake-color: #4ecca3;
+    --button-bg: #16213e;
+    --button-hover: #1f4068;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+    /* Prevent scrolling */
+}
+
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.header {
+    text-align: center;
+    width: 100%;
+}
+
+h1 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+}
+
+.score-board {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--snake-color);
+}
+
+canvas {
+    background-color: var(--game-bg);
+    border: 2px solid #000;
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(233, 69, 96, 0.2);
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
 .control-row {
     display: flex;
     gap: 10px;
@@ -80,29 +153,38 @@ canvas {
     width: 60px;
     height: 60px;
     border: none;
-    border-radius: 15px;
-    background-color: var(--button-bg);
-    color: var(--text-color);
+    border-radius: 50%;
+    /* Circular */
+    background: radial-gradient(circle at 30% 30%, #444, #222);
+    color: #ddd;
     font-size: 1.5rem;
     cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.1s ease;
+    box-shadow:
+        0 5px 0 #111,
+        0 8px 10px rgba(0, 0, 0, 0.5),
+        inset 0 2px 5px rgba(255, 255, 255, 0.1);
     display: flex;
     justify-content: center;
     align-items: center;
     user-select: none;
-    /* Prevent text selection on double tap */
+    -webkit-user-select: none;
+    /* Safari support */
     -webkit-tap-highlight-color: transparent;
+    text-shadow: 0 -1px 1px rgba(0, 0, 0, 0.8);
 }
 
 .control-btn:active {
-    transform: scale(0.95);
-    background-color: var(--button-hover);
+    transform: translateY(4px);
+    box-shadow:
+        0 1px 0 #111,
+        0 2px 5px rgba(0, 0, 0, 0.5),
+        inset 0 2px 5px rgba(0, 0, 0, 0.5);
+    background: radial-gradient(circle at 30% 30%, #333, #111);
 }
 
 .control-btn:hover {
-    background-color: var(--button-hover);
-    box-shadow: 0 0 15px rgba(78, 204, 163, 0.3);
+    filter: brightness(1.1);
 }
 
 .instructions {
@@ -123,4 +205,76 @@ canvas {
         height: 50px;
         font-size: 1.2rem;
     }
+}
+
+.ui-btn {
+    position: absolute;
+    padding: 8px 16px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    transition: transform 0.1s;
+    z-index: 10;
+}
+
+.ui-btn:active {
+    transform: scale(0.95);
+}
+
+#pauseBtn {
+    top: 85px;
+    /* Adjust based on header height */
+    left: 30px;
+    /* Adjust based on padding */
+    background-color: var(--button-bg);
+    font-size: 0.8rem;
+    padding: 5px 10px;
+}
+
+#rulesBtn {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, 120px);
+    /* Position below start text */
+    background-color: var(--snake-color);
+    color: #1a1a2e;
+    font-weight: bold;
+}
+
+.ui-bar {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    gap: 10px;
+    z-index: 20;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+    transition: transform 0.1s;
+    line-height: 1;
+    /* Remove default button styles */
+    color: var(--text-color);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.icon-btn:hover {
+    transform: scale(1.1);
+}
+
+.icon-btn:active {
+    transform: scale(0.9);
+}
+
+.hidden {
+    display: none !important;
 }

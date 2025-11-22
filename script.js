@@ -492,8 +492,8 @@ function draw() {
             ctx.fillText(`Highest Score: ${highScore}`, canvas.width / 2, canvas.height / 2 + 10);
             ctx.fillStyle = '#ffffff';
             ctx.font = '14px "Segoe UI", sans-serif';
-            ctx.fillText('Press SPACE to Start', canvas.width / 2, canvas.height / 2 + 50);
-            ctx.fillText('Press R for Rules', canvas.width / 2, canvas.height / 2 + 70);
+            ctx.fillText('Tap Screen to Start', canvas.width / 2, canvas.height / 2 + 50);
+            // ctx.fillText('Press R for Rules', canvas.width / 2, canvas.height / 2 + 70); // Removed in favor of button
         }
         return;
     }
@@ -561,7 +561,7 @@ function draw() {
         ctx.fillStyle = '#4ecca3';
         ctx.fillText(`Highest Score: ${highScore}`, canvas.width / 2, canvas.height / 2 + 50);
         ctx.fillStyle = '#ffffff'; ctx.font = '14px "Segoe UI", sans-serif';
-        ctx.fillText('Press SPACE to Restart', canvas.width / 2, canvas.height / 2 + 80);
+        ctx.fillText('Tap Screen to Restart', canvas.width / 2, canvas.height / 2 + 80);
     } else if (isPaused) {
         ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#ffffff'; ctx.font = '28px "Segoe UI", sans-serif'; ctx.textAlign = 'center';
@@ -590,11 +590,7 @@ function draw() {
             ctx.fillText(`🛡️ ${invLeft}s`, canvas.width - 10, 45);
         }
     }
-    // mute icon
-    ctx.fillStyle = isMuted ? '#888' : '#fff';
-    ctx.font = '16px "Segoe UI", sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(isMuted ? '🔇' : '🔊', 10, 25);
+    updateUIButtons();
 }
 
 function handleKeyDown(e) {
@@ -692,3 +688,124 @@ generateAssets();
 initAudio();
 draw();
 window.addEventListener('keydown', handleKeyDown);
+
+// Add touch/click support for starting the game
+function handleTap(e) {
+    // Prevent default to avoid double firing on some devices if both touch and click are handled,
+    // but we need to be careful not to block UI interaction if we had buttons.
+    // Since the game is canvas-based and we want "tap anywhere", this is fine for now.
+    // We'll check if the tap is on the controls to avoid conflict, but for "Start Game" screen, controls aren't active.
+
+    if (!isGameStarted || isGameOver) {
+        e.preventDefault(); // Prevent scrolling or zooming on double tap
+        startGame();
+    }
+}
+
+canvas.addEventListener('touchstart', handleTap, { passive: false });
+canvas.addEventListener('mousedown', handleTap);
+
+// UI Button Logic
+const pauseBtn = document.getElementById('pauseBtn');
+const rulesBtn = document.getElementById('rulesBtn');
+const soundBtn = document.getElementById('soundBtn');
+
+soundBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleMute();
+    soundBtn.textContent = isMuted ? '🔇' : '🔊';
+    // Ensure focus doesn't stay on button to avoid spacebar triggering it
+    soundBtn.blur();
+});
+
+pauseBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // Prevent game start/other clicks
+    if (isGameRunning && !isGameOver) {
+        if (!isPaused) {
+            pauseStartTime = Date.now();
+            pauseBtn.textContent = '▶️'; // Resume icon
+        } else {
+            const dur = Date.now() - pauseStartTime;
+            foodSpawnTime += dur;
+            pauseBtn.textContent = '⏸️'; // Pause icon
+        }
+        isPaused = !isPaused;
+        if (isPaused) {
+            stopBGM();
+            draw();
+        } else {
+            startBGM();
+        }
+    }
+    pauseBtn.blur();
+});
+
+rulesBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!isGameStarted) {
+        showRules = !showRules;
+        rulesScrollOffset = 0;
+        // rulesBtn.textContent = showRules ? 'Back' : 'Rules'; // Icon doesn't change for now, or maybe toggle ?/X
+        rulesBtn.textContent = showRules ? '❌' : '❓';
+        draw();
+    }
+    rulesBtn.blur();
+});
+
+// Directional Buttons Logic
+const upBtn = document.getElementById('upBtn');
+const downBtn = document.getElementById('downBtn');
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+
+function handleDirectionBtn(e, dx, dy) {
+    e.stopPropagation();
+    e.preventDefault(); // Prevent default touch behavior
+    if (isGameRunning && !isPaused && !isGameOver) {
+        setDirection(dx, dy);
+    }
+}
+
+// Add both click and touchstart to ensure responsiveness
+// Using helper to avoid code duplication
+if (upBtn) {
+    upBtn.addEventListener('touchstart', (e) => handleDirectionBtn(e, 0, -1), { passive: false });
+    upBtn.addEventListener('mousedown', (e) => handleDirectionBtn(e, 0, -1));
+}
+if (downBtn) {
+    downBtn.addEventListener('touchstart', (e) => handleDirectionBtn(e, 0, 1), { passive: false });
+    downBtn.addEventListener('mousedown', (e) => handleDirectionBtn(e, 0, 1));
+}
+if (leftBtn) {
+    leftBtn.addEventListener('touchstart', (e) => handleDirectionBtn(e, -1, 0), { passive: false });
+    leftBtn.addEventListener('mousedown', (e) => handleDirectionBtn(e, -1, 0));
+}
+if (rightBtn) {
+    rightBtn.addEventListener('touchstart', (e) => handleDirectionBtn(e, 1, 0), { passive: false });
+    rightBtn.addEventListener('mousedown', (e) => handleDirectionBtn(e, 1, 0));
+}
+
+// Update button visibility in game loop/state changes
+function updateUIButtons() {
+    soundBtn.textContent = isMuted ? '🔇' : '🔊';
+
+    if (isGameStarted && !isGameOver) {
+        rulesBtn.classList.add('hidden');
+        pauseBtn.classList.remove('hidden');
+        pauseBtn.textContent = isPaused ? '▶️' : '⏸️';
+    } else if (isGameOver) {
+        rulesBtn.classList.add('hidden');
+        pauseBtn.classList.add('hidden');
+    } else {
+        // Start screen
+        rulesBtn.classList.remove('hidden');
+        pauseBtn.classList.add('hidden');
+        rulesBtn.textContent = showRules ? '❌' : '❓';
+    }
+}
+
+// Hook into draw or state changes to update UI
+// We can call updateUIButtons() at the end of draw() or specific state changes.
+// Let's add it to draw() for simplicity, though slightly inefficient, it ensures sync.
+
+
