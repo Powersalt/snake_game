@@ -14,7 +14,7 @@ const FOOD_TIMEOUT = 10000; // 10 seconds per food
 
 // -------------------------------------------------
 // Asset generation (procedural graphics)
-let dungeonPattern, coinImage, snakeHeadImage, snakeBodyImage;
+let dungeonPattern, coinImage, snakeHeadImage, snakeHeadOpenImage, snakeBodyImage;
 function generateAssets() {
     // Background pattern
     const bgCanvas = document.createElement('canvas');
@@ -90,9 +90,40 @@ function generateAssets() {
     hCtx.arc(5, 15, 0.5, 0, Math.PI * 2);
     hCtx.fill();
     snakeHeadImage = headCanvas;
+
+    // Snake head open mouth image (Pac-Man style)
+    const headOpenCanvas = document.createElement('canvas');
+    headOpenCanvas.width = GRID_SIZE; headOpenCanvas.height = GRID_SIZE;
+    const hoCtx = headOpenCanvas.getContext('2d');
+
+    {
+        const cx = GRID_SIZE / 2;
+        const cy = GRID_SIZE / 2;
+        const r = GRID_SIZE / 2;
+
+        // Draw head with open mouth (facing right)
+        hoCtx.fillStyle = '#2e8b57';
+        hoCtx.beginPath();
+        // Arc from 45 deg to 315 deg
+        hoCtx.arc(cx, cy, r, 0.25 * Math.PI, 1.75 * Math.PI);
+        hoCtx.lineTo(cx, cy);
+        hoCtx.closePath();
+        hoCtx.fill();
+
+        // Eyes (positioned for side view)
+        hoCtx.fillStyle = 'yellow';
+        hoCtx.beginPath();
+        hoCtx.arc(cx, cy - r / 2, 2, 0, Math.PI * 2);
+        hoCtx.fill();
+        hoCtx.fillStyle = 'black';
+        hoCtx.beginPath();
+        hoCtx.arc(cx, cy - r / 2, 0.5, 0, Math.PI * 2);
+        hoCtx.fill();
+    }
+
+    snakeHeadOpenImage = headOpenCanvas;
 }
 
-// -------------------------------------------------
 // Game state variables
 let score = 0;
 let highScore = localStorage.getItem('snakeHighScore') || 0;
@@ -119,6 +150,7 @@ let lastRubySpawnScore = 0;
 let isMuted = false;
 let audioCtx = null;
 let bgmSource = null;
+let noiseBuffer = null;
 let beepSound, turnSound, dieSound, eatSound;
 
 // -------------------------------------------------
@@ -137,6 +169,15 @@ function initAudio() {
         isMuted = true;
         return;
     }
+    // Create noise buffer for crunch sound
+    const bufferSize = audioCtx.sampleRate * 0.5;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+    }
+    noiseBuffer = buffer;
+
     // beep for timer warning
     beepSound = () => {
         if (isMuted || !audioCtx) return;
@@ -174,17 +215,26 @@ function initAudio() {
         osc.start();
         osc.stop(audioCtx.currentTime + 0.5);
     };
-    // eat sound (coins or ruby)
+    // eat sound (crunch)
     eatSound = () => {
-        if (isMuted || !audioCtx) return;
-        const osc = audioCtx.createOscillator();
+        if (isMuted || !audioCtx || !noiseBuffer) return;
+        const src = audioCtx.createBufferSource();
+        src.buffer = noiseBuffer;
         const gain = audioCtx.createGain();
-        osc.connect(gain);
+        const filter = audioCtx.createBiquadFilter();
+
+        src.connect(filter);
+        filter.connect(gain);
         gain.connect(audioCtx.destination);
-        osc.frequency.value = 660;
-        gain.gain.value = 0.08;
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.08);
+
+        filter.type = 'lowpass';
+        filter.frequency.value = 1000;
+
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+
+        src.start();
+        src.stop(audioCtx.currentTime + 0.1);
     };
 }
 
@@ -539,7 +589,25 @@ function draw() {
                 let angle = 0;
                 if (dx === 1) angle = 0; else if (dx === -1) angle = Math.PI; else if (dy === 1) angle = Math.PI / 2; else if (dy === -1) angle = -Math.PI / 2;
                 ctx.rotate(angle);
-                ctx.drawImage(snakeHeadImage, -GRID_SIZE / 2, -GRID_SIZE / 2);
+
+                // Check if about to eat
+                let isEating = false;
+                const nextHead = { x: snake[0].x + dx, y: snake[0].y + dy };
+                if (nextHead.x < 0) nextHead.x = TILE_COUNT - 1;
+                if (nextHead.x >= TILE_COUNT) nextHead.x = 0;
+                if (nextHead.y < 0) nextHead.y = TILE_COUNT - 1;
+                if (nextHead.y >= TILE_COUNT) nextHead.y = 0;
+
+                if ((nextHead.x === food.x && nextHead.y === food.y) ||
+                    (ruby && nextHead.x === ruby.x && nextHead.y === ruby.y)) {
+                    isEating = true;
+                }
+
+                if (isEating && snakeHeadOpenImage) {
+                    ctx.drawImage(snakeHeadOpenImage, -GRID_SIZE / 2, -GRID_SIZE / 2);
+                } else {
+                    ctx.drawImage(snakeHeadImage, -GRID_SIZE / 2, -GRID_SIZE / 2);
+                }
                 ctx.restore();
             } else {
                 ctx.fillStyle = flashing ? '#ffff00' : '#6effc8';
@@ -803,9 +871,5 @@ function updateUIButtons() {
         rulesBtn.textContent = showRules ? '❌' : '❓';
     }
 }
-
-// Hook into draw or state changes to update UI
-// We can call updateUIButtons() at the end of draw() or specific state changes.
-// Let's add it to draw() for simplicity, though slightly inefficient, it ensures sync.
 
 

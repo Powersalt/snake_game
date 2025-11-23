@@ -71,79 +71,6 @@ canvas {
     margin-top: 10px;
 }
 
-:root {
-    --bg-color: #1a1a2e;
-    --game-bg: #0f3460;
-    --accent-color: #e94560;
-    --text-color: #ffffff;
-    --snake-color: #4ecca3;
-    --button-bg: #16213e;
-    --button-hover: #1f4068;
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-body {
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    overflow: hidden;
-    /* Prevent scrolling */
-}
-
-.game-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    padding: 20px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 20px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-.header {
-    text-align: center;
-    width: 100%;
-}
-
-h1 {
-    font-size: 2rem;
-    margin-bottom: 10px;
-    text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
-}
-
-.score-board {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--snake-color);
-}
-
-canvas {
-    background-color: var(--game-bg);
-    border: 2px solid #000;
-    border-radius: 4px;
-    box-shadow: 0 0 20px rgba(233, 69, 96, 0.2);
-}
-
-.controls {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    margin-top: 10px;
-}
-
 .control-row {
     display: flex;
     gap: 10px;
@@ -225,25 +152,7 @@ canvas {
     transform: scale(0.95);
 }
 
-#pauseBtn {
-    top: 85px;
-    /* Adjust based on header height */
-    left: 30px;
-    /* Adjust based on padding */
-    background-color: var(--button-bg);
-    font-size: 0.8rem;
-    padding: 5px 10px;
-}
-
-#rulesBtn {
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, 120px);
-    /* Position below start text */
-    background-color: var(--snake-color);
-    color: #1a1a2e;
-    font-weight: bold;
-}
+/* Removed specific #pauseBtn and #rulesBtn styles to allow them to be styled by .icon-btn and positioned by .ui-bar */
 
 .ui-bar {
     position: absolute;
